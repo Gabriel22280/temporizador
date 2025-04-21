@@ -1,4 +1,5 @@
 from machine import Pin, ADC, Timer, TouchPad, PWM
+import machine
 from time import sleep
 
 # configurar display
@@ -77,9 +78,6 @@ def contarTiempo(timer):
     global contador
     contador +=1
 
-def map(x, x_min, x_max, y_min, y_max):
-    return int(((x-x_min) * (y_max-y_min) / (x_max-x_min)) + y_min)
-
 def tocarCancion(nota, tiempo):
     buzzer.freq(notas[nota])
     buzzer.duty(512)
@@ -102,6 +100,7 @@ def mostrarDisplay(contador):
         an2.duty(valorPot)
     sleep(0.01)
 
+# funciones de buzzer
 def buzzerSilencio():
     buzzer.duty(0)
 
@@ -109,6 +108,7 @@ def buzzerSonido():
     for n, t in melodia:
         tocarCancion(n, t)
 
+# funciones de led RGB
 def colorRGB():
     ledR.duty(250)
     ledG.duty(512)
@@ -119,28 +119,76 @@ def sinColorRGB():
     ledG.duty(0)
     ledB.duty(0)
 
+#funciones de servomotor
+def map(x, x_min, x_max, y_min, y_max):
+    return int(((x-x_min) * (y_max-y_min) / (x_max-x_min)) + y_min)
+
+def moverServo(posicion):
+    servo.duty(map(posicion, 0 , 180, 20, 120))
+
+# tiempo actual
+rtc = machine.RTC()
+horaActual = rtc.datetime()
+
 # variables
 buzzerSilencio()
 sinColorRGB()
+modo = 0
+posicion = 0
+posicion1 = 20
+posicion2 = 80
+punto = 0
+moverServo(posicion)
 
 while True:
-    eStart = TpStart.read()
-    if eStart < 150:
-        timer.init(period=1000, mode=Timer.PERIODIC, callback=contarTiempo)
-        buzzerSilencio()
-        sinColorRGB()
-    eStop = TpStop.read()
-    if eStop < 150:
-        timer.deinit()
-    eReset = TpReset.read()
-    if eReset < 150:
-        timer.deinit()
-        contador = inicio
-        buzzerSilencio()
-        sinColorRGB()
-    if contador >= 60:
-        contador = 0
-        timer.deinit()
-        colorRGB()
-        buzzerSonido()
-    mostrarDisplay(contador)
+    if modo == 0:
+        eStart = TpStart.read()
+        if eStart < 150:
+            timer.init(period=1000, mode=Timer.PERIODIC, callback=contarTiempo)
+            buzzerSilencio()
+            sinColorRGB()
+        eStop = TpStop.read()
+        if eStop < 150:
+            timer.deinit()
+        eReset = TpReset.read()
+        if eReset < 150:
+            timer.deinit()
+            contador = inicio
+            buzzerSilencio()
+            sinColorRGB()
+        if contador >= 60:
+            contador = 0
+            timer.deinit()
+            colorRGB()
+            buzzerSonido()
+        mostrarDisplay(contador)
+    else:
+        eStart = TpStart.read()
+        if eStart < 150:
+            modo = 0
+            sleep(1)
+    
+    eHora = TpHora.read()
+    if eHora < 150:
+        modo = 1
+        sleep(1)
+    if modo == 1:
+        mostrarDisplay(horaActual[5])
+
+    if modo == 2:
+        an1.duty(0)
+        an2.duty(0)
+        horaActual = rtc.datetime()
+        eServo = TpServo.read()
+        if eServo < 150:
+            if punto != 1:
+                moverServo(posicion1)
+                punto = 1
+            else:
+                moverServo(posicion2)
+                punto = 2
+    else:
+        eServo = TpServo.read()
+        if eServo < 150:
+            modo = 2
+            punto = 0

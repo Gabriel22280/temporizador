@@ -20,7 +20,7 @@ display = [[0,0,0,0,0,0,1],
            [0,0,0,1,1,0,0]]
 
 # configurar temporizador/contador
-inicio = 55
+inicio = 40
 contador = inicio
 
 timer = Timer(1)
@@ -118,7 +118,7 @@ def buzzerSonido():
 
 # funciones de led RGB
 def colorRGB():
-    ledR.duty(250)
+    ledR.duty(800)
     ledG.duty(512)
     ledB.duty(1023)    
 
@@ -144,8 +144,9 @@ sinColorRGB()
 modo = 0
 posicion = 0
 posicion1 = 20
-posicion2 = 80
+posicion2 = 84
 punto = 0
+aux = False
 moverServo(posicion)
 
 while True:
@@ -199,6 +200,11 @@ while True:
                 punto = 2
     else:
         eServo = TpServo.read()
-        if eServo < 150:
+        if eServo < 150 and aux == False:
             modo = 2
             punto = 0
+            aux = True
+            sleep(0.5)
+        else:
+            if eServo >= 150:
+                aux = False

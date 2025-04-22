@@ -1,6 +1,7 @@
 from machine import Pin, ADC, Timer, TouchPad, PWM
 import machine
 from time import sleep
+import time
 
 # configurar display
 seg7 = [18,19,4,17,16,21,5]
@@ -61,16 +62,23 @@ notas = {
     'A': 440,
     'B': 493,
     'C5': 523,
+    'D5': 587,
+    'E5': 659,
+    'F5': 698,
+    'G5': 783,
+    'A5': 880,
+    'B5': 987
 }
 melodia = [
-    ('C', 0.5),
-    ('D', 0.5),
-    ('E', 0.5),
-    ('F', 0.5),
-    ('G', 0.5),
-    ('A', 0.5),
-    ('B', 0.5),
-    ('C5', 0.5)
+    ('C', 0.6),
+    ('B5', 0.6),
+    ('D', 0.6),
+    ('F', 0.3),
+    ('A', 0.3),
+    ('C5', 0.3),
+    ('E5', 0.3),
+    ('F5', 0.3),
+    ('A5', 0.9)
 ]
 
 # funciones
@@ -80,10 +88,10 @@ def contarTiempo(timer):
 
 def tocarCancion(nota, tiempo):
     buzzer.freq(notas[nota])
-    buzzer.duty(512)
+    buzzer.duty(1000)
     sleep(tiempo)
     buzzer.duty(0)
-    sleep(0.05)
+    sleep(0.01)
 
 def mostrarDisplay(contador):
     display2 = contador%10
@@ -127,8 +135,8 @@ def moverServo(posicion):
     servo.duty(map(posicion, 0 , 180, 20, 120))
 
 # tiempo actual
-rtc = machine.RTC()
-horaActual = rtc.datetime()
+#rtc = machine.RTC()
+horaActual = time.localtime()
 
 # variables
 buzzerSilencio()
@@ -158,6 +166,7 @@ while True:
             sinColorRGB()
         if contador >= 60:
             contador = 0
+            mostrarDisplay(contador)
             timer.deinit()
             colorRGB()
             buzzerSonido()
@@ -170,15 +179,16 @@ while True:
     
     eHora = TpHora.read()
     if eHora < 150:
-        modo = 1
-        sleep(1)
+        if modo != 1:
+            modo = 1
+            sleep(1)
     if modo == 1:
-        mostrarDisplay(horaActual[5])
+        horaActual = time.localtime()
+        mostrarDisplay(horaActual[4])
 
     if modo == 2:
         an1.duty(0)
         an2.duty(0)
-        horaActual = rtc.datetime()
         eServo = TpServo.read()
         if eServo < 150:
             if punto != 1:

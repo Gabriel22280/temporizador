@@ -2,6 +2,8 @@ from machine import Pin, ADC, Timer, TouchPad, PWM
 import machine
 from time import sleep
 import time
+import network
+import ntptime
 
 # configurar display
 seg7 = [18,19,4,17,16,21,5]
@@ -82,6 +84,22 @@ melodia = [
 ]
 
 # funciones
+def connect_wifi(ssid, password):
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(True)
+    if not wlan.isconnected():
+        print('Conectando a la red')
+        wlan.connect(ssid, password)
+        while not wlan.isconnected():
+            pass
+    print('Conectado:', wlan.ifconfig())
+
+def sync_time():
+    ntptime.settime()
+    timezone_offset = -5 * 3600
+    local_time = time.localtime(time.time() + timezone_offset)
+    return local_time
+
 def contarTiempo(timer):
     global contador
     contador +=1
@@ -134,10 +152,6 @@ def map(x, x_min, x_max, y_min, y_max):
 def moverServo(posicion):
     servo.duty(map(posicion, 0 , 180, 20, 120))
 
-# tiempo actual
-#rtc = machine.RTC()
-horaActual = time.localtime()
-
 # variables
 buzzerSilencio()
 sinColorRGB()
@@ -148,6 +162,10 @@ posicion2 = 84
 punto = 0
 aux = False
 moverServo(posicion)
+connect_wifi('iPhone', 'Aley2201')
+horaActual = sync_time()
+# tiempo actual
+horaActual = time.localtime()
 
 while True:
     if modo == 0:
